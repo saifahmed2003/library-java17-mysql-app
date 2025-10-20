@@ -6,40 +6,44 @@ import com.sparta.mg.libraryproject2.model.repositories.AuthorRepository;
 import com.sparta.mg.libraryproject2.model.repositories.BookRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(AuthorWebController.class)
 @AutoConfigureMockMvc
-public class MVCTests {
+class MVCTests {
 
     @Autowired
     private MockMvc mockMvc;
 
-//  private AuthorRepository authorRepository;
-//
+    // ✅ mock the dependencies so Spring can create the web controller successfully
+    @MockBean
+    private AuthorRepository authorRepository;
+
+    @MockBean
+    private BookRepository bookRepository;
 
     @Test
-    @DisplayName("test Authors Page")
+    @DisplayName("Test Authors Page renders successfully")
     void testAuthorsPage() throws Exception {
-//        Author author = new Author();
-//        author.setId(1);
-//        author.setFullName("Manish");
-//        Mockito.when(authorRepository.findAll()).thenReturn(new ArrayList<>(List.of(author)));
+        // Mock the repository behavior
+        Author author = new Author();
+        author.setId(1);
+        author.setFullName("Manish");
+        Mockito.when(authorRepository.findAll()).thenReturn(List.of(author));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/web/authors")).andDo(MockMvcResultHandlers.print());
+        // Perform and verify
+        mockMvc.perform(MockMvcRequestBuilders.get("/web/authors"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print());
     }
 }

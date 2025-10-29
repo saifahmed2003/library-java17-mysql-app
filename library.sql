@@ -1,7 +1,3 @@
-DROP DATABASE IF EXISTS library;
-CREATE DATABASE library;
-USE library;
-
 CREATE TABLE authors (
 author_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
 full_name VARCHAR(40)

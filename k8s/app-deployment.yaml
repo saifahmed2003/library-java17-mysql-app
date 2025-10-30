@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-java-app
+spec:
+  selector:
+    matchLabels:
+      app: library-java-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: library-java-app
+    spec:
+      containers:
+        - name: library-java-app
+          image: library-java17-mysql-app:latest
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/library
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
+            - name: SPRING_JPA_DATABASE_PLATFORM
+              value: org.hibernate.dialect.MySQLDialect
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: none
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: library-java-service
+spec:
+  selector:
+    app: library-java-app
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30000
+  type: NodePort

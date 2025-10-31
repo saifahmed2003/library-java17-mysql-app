@@ -37,7 +37,8 @@ metadata:
 spec:
   selector:
     app: library-java-app
+  type: NodePort
+  ports:
     - port: 5000
       targetPort: 5000
-      nodePort: 30000
-  type: NodePort
+      nodePort: 3000

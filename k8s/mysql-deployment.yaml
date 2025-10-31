@@ -26,13 +26,14 @@ spec:
             - name: mysql-data
               mountPath: /var/lib/mysql
             - name: init-sql
-              mountPath: /docker-entrypoint-initdb.d
+              mountPath: /docker-entrypoint-initdb.d/library.sql
+              subPath: library.sql
       volumes:
         - name: mysql-data
           emptyDir: {}
         - name: init-sql
-          hostPath:
-            path: /home/ubuntu/library-java17-mysql-app/library.sql
+          configMap:
+            name: library-sql
 ---
 apiVersion: v1
 kind: Service

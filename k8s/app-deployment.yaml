@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: library-app
-          image: <YOUR_DOCKERHUB_USERNAME>/library-java17-mysql-app:latest
+          image: saifahmed2003/library-java17-mysql-app:latest
           ports:
             - containerPort: 8080
           env:

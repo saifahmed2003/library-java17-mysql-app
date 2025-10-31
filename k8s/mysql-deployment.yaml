@@ -1,39 +1,103 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb
+data:
+  library.sql: |
+    CREATE DATABASE IF NOT EXISTS library;
+    USE library;
+    
+    CREATE TABLE IF NOT EXISTS authors (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255)
+    );
+    
+    CREATE TABLE IF NOT EXISTS books (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      isbn VARCHAR(50),
+      author_id BIGINT,
+      FOREIGN KEY (author_id) REFERENCES authors(id)
+    );
+    
+    INSERT INTO authors (name, email) VALUES 
+      ('J.K. Rowling', 'jk@example.com'),
+      ('George Orwell', 'orwell@example.com'),
+      ('Jane Austen', 'austen@example.com');
+    
+    INSERT INTO books (title, isbn, author_id) VALUES 
+      ('Harry Potter', '978-0439708180', 1),
+      ('1984', '978-0451524935', 2),
+      ('Pride and Prejudice', '978-0141439518', 3);
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  replicas: 1
   template:
     metadata:
       labels:
         app: mysql
     spec:
       containers:
-        - name: mysql
-          image: mysql:8
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root
-            - name: MYSQL_DATABASE
-              value: library
-          ports:
-            - containerPort: 3306
-          volumeMounts:
-            - name: mysql-data
-              mountPath: /var/lib/mysql
-            - name: init-sql
-              mountPath: /docker-entrypoint-initdb.d/library.sql
-              subPath: library.sql
+      - name: mysql
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root"
+        - name: MYSQL_DATABASE
+          value: "library"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+            - -proot
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+            - -proot
+          initialDelaySeconds: 10
+          periodSeconds: 5
       volumes:
-        - name: mysql-data
-          emptyDir: {}
-        - name: init-sql
-          configMap:
-            name: library-sql
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: mysql-initdb
+        configMap:
+          name: mysql-initdb
 ---
 apiVersion: v1
 kind: Service
@@ -43,5 +107,6 @@ spec:
   selector:
     app: mysql
   ports:
-    - port: 3306
-      targetPort: 3306
+  - port: 3306
+    targetPort: 3306
+  clusterIP: None  # Headless service for stable DNS

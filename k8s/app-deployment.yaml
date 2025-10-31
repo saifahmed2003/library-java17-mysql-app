@@ -1,44 +1,66 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: library-java-app
+  name: library-app
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: library-java-app
-  replicas: 1
+      app: library-app
   template:
     metadata:
       labels:
-        app: library-java-app
+        app: library-app
     spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z mysql 3306; do
+            echo "Waiting for MySQL...";
+            sleep 3;
+          done
       containers:
-        - name: library-java-app
-          image: library-java17-mysql-app:latest
-          imagePullPolicy: Never
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql:3306/library
-            - name: SPRING_DATASOURCE_USERNAME
-              value: root
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: root
-            - name: SPRING_JPA_DATABASE_PLATFORM
-              value: org.hibernate.dialect.MySQLDialect
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: none
-          ports:
-            - containerPort: 5000
+      - name: app
+        image: saifahmed2003/library-java-app:latest  # We'll build and push this
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql:3306/library"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "root"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "root"
+        - name: SPRING_JPA_DATABASE_PLATFORM
+          value: "org.hibernate.dialect.MySQLDialect"
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "none"
+        ports:
+        - containerPort: 5000
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 5
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: library-java-service
+  name: library-app
 spec:
-  selector:
-    app: library-java-app
   type: NodePort
+  selector:
+    app: library-app
   ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 3000
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30500  # Fixed port for external access

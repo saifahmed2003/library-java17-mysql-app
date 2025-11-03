@@ -3,10 +3,10 @@ kind: Deployment
 metadata:
   name: mysql
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  replicas: 1
   template:
     metadata:
       labels:
@@ -25,6 +25,11 @@ spec:
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d   # 👈 where MySQL runs *.sql
       volumes:
         - name: mysql-storage
           emptyDir: {}
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-script                   # 👈 link to ConfigMap

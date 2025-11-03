@@ -16,7 +16,7 @@ spec:
         - name: library-app
           image: saifahmed2003/library-java17-mysql-app:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 5000
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:mysql://mysql:3306/librarydb

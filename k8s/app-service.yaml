@@ -3,10 +3,9 @@ kind: Service
 metadata:
   name: library-app-service
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30001
+    - port: 5000          # 👈 changed from 8080
+      targetPort: 5000    # 👈 changed from 8080
   selector:
     app: library-app
